@@ -189,21 +189,6 @@ js_logic <- "
             l.on('mouseover', function () { this.openPopup(); });
           }
         }).addTo(map);
-
-        var prompt = document.getElementById('location-prompt');
-        if (prompt) prompt.querySelector('.close-x').onclick = function(){ prompt.style.display='none'; };
-        
-        map.locate({setView: false, enableHighAccuracy: true, timeout: 10000});
-        map.on('locationfound', function(e) {
-          if (prompt) prompt.style.display = 'none';
-          var allMarkers = [];
-          map.eachLayer(function(l) { if (l instanceof L.Marker && l.options.group === 'Campuses') allMarkers.push(l); });
-          var dists = allMarkers.map(m => ({ m: m, d: e.latlng.distanceTo(m.getLatLng()) })).sort((a, b) => a.d - b.d);
-          var bounds = L.latLngBounds().extend(e.latlng);
-          for (var i = 0; i < Math.min(5, dists.length); i++) bounds.extend(dists[i].m.getLatLng());
-          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
-          L.circleMarker(e.latlng, {radius: 8, fillColor: '#f00', color: '#fff', weight: 2}).addTo(map);
-        });
     });
   }
 "
@@ -226,7 +211,6 @@ map_shell <- leaflet(options = leafletOptions(
     
     tags$style(HTML("
       body, html, #htmlwidget_container, .leaflet { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-      .close-x { position: absolute; top: 4px; right: 8px; font-size: 20px; color: #999; cursor: pointer; line-height: 1; }
 
       /* ---------- FLASHY-BUT-MINIMAL HOVER CARD ---------- */
       /* Strip Leaflet's default bubble so the card floats cleanly */
@@ -264,7 +248,6 @@ map_shell <- leaflet(options = leafletOptions(
       .cbc-pill:hover { background: #e74c3c; color: #fff; }
       /* --------------------------------------------------- */
 
-      #location-prompt { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); z-index: 1000; background: white; padding: 10px 15px; border-radius: 10px; border: 1px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 12px; font-family: Helvetica, sans-serif; font-weight: bold; text-align: center; width: 80%; max-width: 350px; }
       #update-timer { position: absolute; bottom: 12px; left: 12px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 8px; font-family: Helvetica, sans-serif; font-weight: bold; font-size: 11px; border: 1px solid #ddd; max-width: 180px; text-align: center; line-height: 1.4; box-shadow: 0 4px 10px rgba(0,0,0,0.15); color: #333; }
       #bci-logo { position: absolute; bottom: 12px; right: 12px; z-index: 1000; }
       #bci-logo img { height: 65px; width: auto; opacity: 1.0; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -276,8 +259,7 @@ map_shell <- leaflet(options = leafletOptions(
       @media (max-width: 600px) { #update-timer { font-size: 9px; bottom: 10px; left: 10px; max-width: 140px; padding: 6px; } #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbc-hover-card { min-width: 200px; max-width: 280px; } }
     "))
   )) %>%
-  appendContent(tags$div(id = "location-prompt", tags$span(class="close-x", "×"), "Granting location permission will allow you to view registered campuses nearby."),
-                tags$div(id = "bci-logo", tags$img(src = "icons/logos.png")),
+  appendContent(tags$div(id = "bci-logo", tags$img(src = "icons/logos.png")),
                 tags$div(id = "update-timer", "Calculating last update...")) %>%
   onRender(js_logic, data = map_data_bundle)
 

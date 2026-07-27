@@ -15,7 +15,7 @@ data<- read_sheet("https://docs.google.com/spreadsheets/d/1CKx9mL-AQxMGSr_nrLVmH
                        sheet = 3,range = "A:AJ", col_names = TRUE)
 
 no_of_campus <- NROW(data)
-writeLines(as.character(no_of_campus), "no_of_campus.txt")
+writeLines(as.character(no_of_campus), "no_of_campuses.txt")
 
 # Process fresh data
 data <- data |>
@@ -33,7 +33,11 @@ data <- data |>
     sep = ",\\s*",
     convert = TRUE
   ) |>
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326) 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |> 
+  mutate(
+    phone1 = map_chr(phone1, ~ if (length(.x) == 0) NA_character_ else as.character(.x[[1]])),
+    phone2 = map_chr(phone2, ~ if (length(.x) == 0) NA_character_ else as.character(.x[[1]]))
+  )
   
 no_of_states <- unique(data$state) 
 no_of_states <-  n_distinct(no_of_states)
