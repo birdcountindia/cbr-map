@@ -122,43 +122,6 @@ js_logic <- "
     fetch(baseUrl + 'no_of_campuses.txt').then(r => r.text()).then(t => { document.getElementById('dash-campuses').innerText = t.trim(); });
     fetch(baseUrl + 'no_of_states.txt').then(r => r.text()).then(t => { document.getElementById('dash-states').innerText = t.trim() + ' / 37'; });
 
-    // --- TIMER LOGIC ---
-    fetch(baseUrl + 'last_update.txt').then(r => r.text()).then(ts => {
-        var lastUpdate = new Date(ts.trim());
-        var timerElement = document.getElementById('update-timer');
-        
-        function updateCounter() {
-          var now = new Date();
-          var diffMs = now - lastUpdate;
-          
-          if (isNaN(diffMs)) { 
-             if(timerElement) timerElement.innerHTML = 'Status: Online'; 
-             return; 
-          }
-          
-          var diffHrs = Math.floor(diffMs / 3600000);
-          var diffMins = Math.floor((diffMs % 3600000) / 60000);
-
-          if (timerElement) {
-              if (diffHrs > 0) {
-                 timerElement.innerHTML = \"This map was last updated \" + diffHrs + \" hours and \" + diffMins + \" minutes ago.\";
-              } else {
-                 timerElement.innerHTML = \"This map was last updated \" + diffMins + \" minutes ago.\";
-              }
-              
-              if (diffHrs >= 2) { 
-                timerElement.style.color = '#e74c3c'; 
-                timerElement.style.fontWeight = 'bold';
-              } else {
-                timerElement.style.color = '#555'; 
-                timerElement.style.fontWeight = 'normal';
-              }
-          }
-        }
-        updateCounter(); 
-        setInterval(updateCounter, 60000);
-    });
-
     // 3. CAMPUS MARKERS
     fetch(baseUrl + 'campuses.json').then(r => r.json()).then(data => {
         L.geoJson(data, {
@@ -248,7 +211,6 @@ map_shell <- leaflet(options = leafletOptions(
       .cbc-pill:hover { background: #e74c3c; color: #fff; }
       /* --------------------------------------------------- */
 
-      #update-timer { position: absolute; bottom: 12px; left: 12px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 8px; font-family: Helvetica, sans-serif; font-weight: bold; font-size: 11px; border: 1px solid #ddd; max-width: 180px; text-align: center; line-height: 1.4; box-shadow: 0 4px 10px rgba(0,0,0,0.15); color: #333; }
       #bci-logo { position: absolute; bottom: 12px; right: 12px; z-index: 1000; }
       #bci-logo img { height: 65px; width: auto; opacity: 1.0; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
       .stats-dashboard { background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-family: 'Helvetica Neue', Arial, sans-serif; min-width: 110px; margin-top: 10px !important; }
@@ -256,11 +218,10 @@ map_shell <- leaflet(options = leafletOptions(
       .stat-item:last-child { border-bottom: none; margin-bottom: 0; }
       .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-top: -2px; }
       .stat-value { font-size: 26px; font-weight: 800; color: #e74c3c; line-height: 1.0; }
-      @media (max-width: 600px) { #update-timer { font-size: 9px; bottom: 10px; left: 10px; max-width: 140px; padding: 6px; } #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbc-hover-card { min-width: 200px; max-width: 280px; } }
+      @media (max-width: 600px) { #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbc-hover-card { min-width: 200px; max-width: 280px; } }
     "))
   )) %>%
-  appendContent(tags$div(id = "bci-logo", tags$img(src = "icons/logos.png")),
-                tags$div(id = "update-timer", "Calculating last update...")) %>%
+  appendContent(tags$div(id = "bci-logo", tags$img(src = "icons/logos.png"))) %>%
   onRender(js_logic, data = map_data_bundle)
 
 # --- STEP 4: SAVE ---
