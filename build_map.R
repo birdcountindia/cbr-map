@@ -7,7 +7,6 @@ library(sf)
 
 # --- STEP 1: LOAD & PREPARE DATA ---
 if (!file.exists("in_boundary.json")) stop("Error: 'in_boundary.json' missing.")
-
 # 1. Load Boundary
 in_simple <- read_sf("in_boundary.json")
 india_json_str <- sf_geojson(in_simple)
@@ -52,40 +51,40 @@ js_logic <- "
     function coordRow(name, email, phone){
       if (!name && !email && !phone) return '';
       var links = '';
-      if (email) links += '<a class=\"cbc-chip\" href=\"mailto:'+esc(email)+'\" title=\"Email\">&#9993;</a>';
+      if (email) links += '<a class=\"cbr-chip\" href=\"mailto:'+esc(email)+'\" title=\"Email\">&#9993;</a>';
       var wa = waLink(phone);
-      if (wa) links += '<a class=\"cbc-chip cbc-wa\" href=\"'+wa+'\" target=\"_blank\" rel=\"noopener\" title=\"WhatsApp\">WhatsApp</a>';
-      return '<div class=\"cbc-coord\">' +
-               '<span class=\"cbc-coord-name\">'+esc(name || 'Coordinator')+'</span>' +
-               '<span class=\"cbc-coord-links\">'+links+'</span>' +
+      if (wa) links += '<a class=\"cbr-chip cbr-wa\" href=\"'+wa+'\" target=\"_blank\" rel=\"noopener\" title=\"WhatsApp\">WhatsApp</a>';
+      return '<div class=\"cbr-coord\">' +
+               '<span class=\"cbr-coord-name\">'+esc(name || 'Coordinator')+'</span>' +
+               '<span class=\"cbr-coord-links\">'+links+'</span>' +
              '</div>';
     }
     function buildPopup(p){
-      var html = '<div class=\"cbc-hover-card\">';
+      var html = '<div class=\"cbr-hover-card\">';
 
       // Title (linked to website if present)
       var title = esc(p.campus);
       if (isUrl(p.web)) title = '<a href=\"'+esc(p.web)+'\" target=\"_blank\" rel=\"noopener\">'+title+'</a>';
-      html += '<div class=\"cbc-title\">'+title+'</div>';
+      html += '<div class=\"cbr-title\">'+title+'</div>';
 
       // Subtitle: State . Area
       var subParts = [];
       if (p.state) subParts.push(esc(p.state));
       if (p.area)  subParts.push(esc(p.area));
-      if (subParts.length) html += '<div class=\"cbc-sub\">'+subParts.join(' &middot; ')+'</div>';
+      if (subParts.length) html += '<div class=\"cbr-sub\">'+subParts.join(' &middot; ')+'</div>';
 
       // Coordinators
       var coords = coordRow(p.coordinator1, p.email1, p.phone1) +
                    coordRow(p.coordinator2, p.email2, p.phone2);
-      if (coords) html += '<div class=\"cbc-divider\"></div><div class=\"cbc-coord-wrap\">'+coords+'</div>';
+      if (coords) html += '<div class=\"cbr-divider\"></div><div class=\"cbr-coord-wrap\">'+coords+'</div>';
 
       // Action pills (only real URLs)
       var pills = '';
-      if (isUrl(p.gmap))  pills += '<a class=\"cbc-pill\" href=\"'+esc(p.gmap)+'\" target=\"_blank\" rel=\"noopener\">Directions</a>';
-      if (isUrl(p.web))   pills += '<a class=\"cbc-pill\" href=\"'+esc(p.web)+'\" target=\"_blank\" rel=\"noopener\">Website</a>';
-      if (isUrl(p.ebird)) pills += '<a class=\"cbc-pill\" href=\"'+esc(p.ebird)+'\" target=\"_blank\" rel=\"noopener\">eBird</a>';
-      if (isUrl(p.inat))  pills += '<a class=\"cbc-pill\" href=\"'+esc(p.inat)+'\" target=\"_blank\" rel=\"noopener\">iNaturalist</a>';
-      if (pills) html += '<div class=\"cbc-divider\"></div><div class=\"cbc-pills\">'+pills+'</div>';
+      if (isUrl(p.gmap))  pills += '<a class=\"cbr-pill\" href=\"'+esc(p.gmap)+'\" target=\"_blank\" rel=\"noopener\">Directions</a>';
+      if (isUrl(p.web))   pills += '<a class=\"cbr-pill\" href=\"'+esc(p.web)+'\" target=\"_blank\" rel=\"noopener\">Website</a>';
+      if (isUrl(p.ebird)) pills += '<a class=\"cbr-pill\" href=\"'+esc(p.ebird)+'\" target=\"_blank\" rel=\"noopener\">eBird</a>';
+      if (isUrl(p.inat))  pills += '<a class=\"cbr-pill\" href=\"'+esc(p.inat)+'\" target=\"_blank\" rel=\"noopener\">iNaturalist</a>';
+      if (pills) html += '<div class=\"cbr-divider\"></div><div class=\"cbr-pills\">'+pills+'</div>';
 
       html += '</div>';
       return html;
@@ -139,7 +138,7 @@ js_logic <- "
           },
           onEachFeature: function (f, l) {
             l.bindPopup(buildPopup(f.properties), {
-              className: 'cbc-hover-popup',
+              className: 'cbr-hover-popup',
               closeButton: true,
               autoClose: true,
               closeOnClick: true,
@@ -177,13 +176,13 @@ map_shell <- leaflet(options = leafletOptions(
 
       /* ---------- FLASHY-BUT-MINIMAL HOVER CARD ---------- */
       /* Strip Leaflet's default bubble so the card floats cleanly */
-      .cbc-hover-popup .leaflet-popup-content-wrapper { background: transparent; box-shadow: none; padding: 0; border-radius: 18px; }
-      .cbc-hover-popup .leaflet-popup-content { margin: 0; }
-      .cbc-hover-popup .leaflet-popup-tip-container { display: none; }
-      .cbc-hover-popup .leaflet-popup-close-button { color: #b0b8c0; z-index: 5; padding: 6px 8px 0 0; }
-      .cbc-hover-popup .leaflet-popup-close-button:hover { color: #e74c3c; }
+      .cbr-hover-popup .leaflet-popup-content-wrapper { background: transparent; box-shadow: none; padding: 0; border-radius: 18px; }
+      .cbr-hover-popup .leaflet-popup-content { margin: 0; }
+      .cbr-hover-popup .leaflet-popup-tip-container { display: none; }
+      .cbr-hover-popup .leaflet-popup-close-button { color: #b0b8c0; z-index: 5; padding: 6px 8px 0 0; }
+      .cbr-hover-popup .leaflet-popup-close-button:hover { color: #e74c3c; }
 
-      .cbc-hover-card {
+      .cbr-hover-card {
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         min-width: 220px; max-width: 300px;
         background: #ffffff;
@@ -193,22 +192,22 @@ map_shell <- leaflet(options = leafletOptions(
         box-shadow: 0 12px 34px rgba(0,0,0,0.20);
         white-space: normal;
       }
-      .cbc-title { text-align: center; font-size: 18px; font-weight: 800; text-transform: capitalize; color: #1f2d3d; margin: 0 0 2px; line-height: 1.25; word-wrap: break-word; }
-      .cbc-title a { color: #1f2d3d; text-decoration: none; }
-      .cbc-title a:hover { color: #e74c3c; }
-      .cbc-sub { text-align: center; font-size: 12px; color: #7a8794; text-transform: capitalize; margin-bottom: 2px; }
-      .cbc-divider { height: 1px; background: linear-gradient(to right, transparent, #e6e9ec, transparent); margin: 12px 0; }
-      .cbc-coord-wrap { display: flex; flex-direction: column; gap: 10px; }
-      .cbc-coord { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-      .cbc-coord-name { font-size: 13px; font-weight: 600; color: #2c3e50; }
-      .cbc-coord-links { display: flex; gap: 6px; flex-shrink: 0; }
-      .cbc-chip { display: inline-flex; align-items: center; justify-content: center; height: 28px; min-width: 28px; padding: 0 9px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: #f1f3f5; color: #495057; transition: transform .12s ease, background .12s ease; }
-      .cbc-chip:hover { transform: translateY(-1px); }
-      .cbc-wa { background: #25D366; color: #fff; }
-      .cbc-wa:hover { background: #1da851; }
-      .cbc-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-      .cbc-pill { flex: 1 1 auto; text-align: center; padding: 9px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none; background: #fff; color: #e74c3c; border: 1.5px solid #e74c3c; transition: all .12s ease; white-space: nowrap; }
-      .cbc-pill:hover { background: #e74c3c; color: #fff; }
+      .cbr-title { text-align: center; font-size: 18px; font-weight: 800; text-transform: capitalize; color: #1f2d3d; margin: 0 0 2px; line-height: 1.25; word-wrap: break-word; }
+      .cbr-title a { color: #1f2d3d; text-decoration: none; }
+      .cbr-title a:hover { color: #e74c3c; }
+      .cbr-sub { text-align: center; font-size: 12px; color: #7a8794; text-transform: capitalize; margin-bottom: 2px; }
+      .cbr-divider { height: 1px; background: linear-gradient(to right, transparent, #e6e9ec, transparent); margin: 12px 0; }
+      .cbr-coord-wrap { display: flex; flex-direction: column; gap: 10px; }
+      .cbr-coord { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .cbr-coord-name { font-size: 13px; font-weight: 600; color: #2c3e50; }
+      .cbr-coord-links { display: flex; gap: 6px; flex-shrink: 0; }
+      .cbr-chip { display: inline-flex; align-items: center; justify-content: center; height: 28px; min-width: 28px; padding: 0 9px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: #f1f3f5; color: #495057; transition: transform .12s ease, background .12s ease; }
+      .cbr-chip:hover { transform: translateY(-1px); }
+      .cbr-wa { background: #25D366; color: #fff; }
+      .cbr-wa:hover { background: #1da851; }
+      .cbr-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+      .cbr-pill { flex: 1 1 auto; text-align: center; padding: 9px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none; background: #fff; color: #e74c3c; border: 1.5px solid #e74c3c; transition: all .12s ease; white-space: nowrap; }
+      .cbr-pill:hover { background: #e74c3c; color: #fff; }
       /* --------------------------------------------------- */
 
       #bci-logo { position: absolute; bottom: 12px; right: 12px; z-index: 1000; }
@@ -218,7 +217,7 @@ map_shell <- leaflet(options = leafletOptions(
       .stat-item:last-child { border-bottom: none; margin-bottom: 0; }
       .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-top: -2px; }
       .stat-value { font-size: 26px; font-weight: 800; color: #e74c3c; line-height: 1.0; }
-      @media (max-width: 600px) { #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbc-hover-card { min-width: 200px; max-width: 280px; } }
+      @media (max-width: 600px) { #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbr-hover-card { min-width: 200px; max-width: 280px; } }
     "))
   )) %>%
   appendContent(tags$div(id = "bci-logo", tags$img(src = "icons/logos.png"))) %>%

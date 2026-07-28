@@ -41,8 +41,8 @@ update_map_data <- function() {
     # Flatten list-columns that read_sheet returns for mixed-type cells.
     # sf_geojson() cannot serialize list-columns -> "Unknown R object type".
     mutate(
-      phone1 = map_chr(phone1, ~ if (length(.x) == 0) NA_character_ else as.character(.x[[1]])),
-      phone2 = map_chr(phone2, ~ if (length(.x) == 0) NA_character_ else as.character(.x[[1]]))
+      phone1 = map_chr(phone1, ~ if_else(length(.x) == 0, NA_character_, as.character(.x[[1]]))),
+      phone2 = map_chr(phone2, ~ if_else(length(.x) == 0, NA_character_, as.character(.x[[1]])))
     )
   
   # Distinct states / UTs among mapped campuses
