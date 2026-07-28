@@ -224,4 +224,4 @@ map_shell <- leaflet(options = leafletOptions(
   onRender(js_logic, data = map_data_bundle)
 
 # --- STEP 4: SAVE ---
-saveWidget(map_shell, file = "CBR_map.html", selfcontained = TRUE)
+saveWidget(map_shell, file = "index.html", selfcontained = TRUE)
