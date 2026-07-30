@@ -23,11 +23,11 @@ update_map_data <- function() {
   
   # --- Process fresh data ---
   data <- data |>
-    select(c(2, 4, 5, 6, 8, 9, 11, 15, 16, 17, 21, 22, 32, 33)) |>
+    select(c(2, 4, 5, 6, 8, 9, 11, 12, 15, 17, 18, 21, 32, 33)) |>
     setNames(c(
       "coords", "campus", "gmap", "web", "state", "area",
-      "coordinator1", "email1", "phone1",
-      "coordinator2", "email2", "phone2",
+      "coordinator1", "type1", "email1",
+      "coordinator2", "type2", "email2",
       "inat", "ebird"
     )) |>
     filter(!is.na(coords)) |>
@@ -37,13 +37,7 @@ update_map_data <- function() {
       sep = ",\\s*",
       convert = TRUE
     ) |>
-    st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |>
-    # Flatten list-columns that read_sheet returns for mixed-type cells.
-    # sf_geojson() cannot serialize list-columns -> "Unknown R object type".
-    mutate(
-      phone1 = map_chr(phone1, ~ if_else(length(.x) == 0, NA_character_, as.character(.x[[1]]))),
-      phone2 = map_chr(phone2, ~ if_else(length(.x) == 0, NA_character_, as.character(.x[[1]])))
-    )
+    st_as_sf(coords = c("longitude", "latitude"), crs = 4326) 
   
   # Distinct states / UTs among mapped campuses
   no_of_states <- n_distinct(data$state)
