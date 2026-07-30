@@ -7,6 +7,7 @@ library(sf)
 
 # --- STEP 1: LOAD & PREPARE DATA ---
 if (!file.exists("in_boundary.json")) stop("Error: 'in_boundary.json' missing.")
+
 # 1. Load Boundary
 in_simple <- read_sf("in_boundary.json")
 india_json_str <- sf_geojson(in_simple)
@@ -41,21 +42,41 @@ js_logic <- "
       var t = String(s).trim().toLowerCase();
       return t.indexOf('http://') === 0 || t.indexOf('https://') === 0;
     }
-    function waLink(phone){
-      if (phone === null || phone === undefined || phone === '') return null;
-      var d = String(phone).replace(/[^0-9]/g, '');
-      if (d.length === 10) d = '91' + d;          // add India country code
-      if (d.length < 11 || d.length > 13) return null;
-      return 'https://wa.me/' + d;
+    function typeTag(t){
+      if (!t) return '';
+      var s = String(t).toLowerCase();
+      if (s.indexOf('fac') > -1) return ' (F)';
+      if (s.indexOf('stu') > -1) return ' (S)';
+      return '';
     }
-    function coordRow(name, email, phone){
-      if (!name && !email && !phone) return '';
+    function sizeLabel(a){
+      if (a === null || a === undefined || String(a).trim() === '') return '';
+      var s = String(a).toLowerCase();
+      // Single numeric value (e.g. '45', '300 acres')?
+      var digits = s.replace(/[^0-9.]/g, '');
+      var isRange = s.indexOf('-') > -1 || s.indexOf('to') > -1;
+      if (digits !== '' && !isRange) {
+        var n = parseFloat(digits);
+          if (!isNaN(n)) {
+          if (n < 20)  return 'Small Campus';
+          if (n <= 200) return 'Medium Campus';
+          return 'Large Campus';
+        }
+      }
+      // Categorical text from the form dropdown
+      if (s.indexOf('less') > -1 || s.indexOf('below') > -1 || s.indexOf('<20') > -1 || s.indexOf('< 20') > -1) return 'Small';
+      if (s.indexOf('200') > -1 && (s.indexOf('+') > -1 || s.indexOf('more') > -1 || s.indexOf('above') > -1 || s.indexOf('over') > -1 || s.indexOf('greater') > -1)) return 'Large';
+      if (s.indexOf('20') > -1 && s.indexOf('200') > -1) return 'Medium';
+      // Unknown format -> show the original so no info is lost
+      return String(a).trim();
+    }
+    function coordRow(name, email, type){
+      if (!name && !email) return '';
       var links = '';
       if (email) links += '<a class=\"cbr-chip\" href=\"mailto:'+esc(email)+'\" title=\"Email\">&#9993;</a>';
-      var wa = waLink(phone);
-      if (wa) links += '<a class=\"cbr-chip cbr-wa\" href=\"'+wa+'\" target=\"_blank\" rel=\"noopener\" title=\"WhatsApp\">WhatsApp</a>';
+      var label = esc(name || 'Coordinator') + typeTag(type);
       return '<div class=\"cbr-coord\">' +
-               '<span class=\"cbr-coord-name\">'+esc(name || 'Coordinator')+'</span>' +
+               '<span class=\"cbr-coord-name\">'+label+'</span>' +
                '<span class=\"cbr-coord-links\">'+links+'</span>' +
              '</div>';
     }
@@ -67,20 +88,21 @@ js_logic <- "
       if (isUrl(p.web)) title = '<a href=\"'+esc(p.web)+'\" target=\"_blank\" rel=\"noopener\">'+title+'</a>';
       html += '<div class=\"cbr-title\">'+title+'</div>';
 
-      // Subtitle: State . Area
+      // Subtitle: State . Size
       var subParts = [];
       if (p.state) subParts.push(esc(p.state));
-      if (p.area)  subParts.push(esc(p.area));
+      var sz = sizeLabel(p.area);
+      if (sz) subParts.push(esc(sz));
       if (subParts.length) html += '<div class=\"cbr-sub\">'+subParts.join(' &middot; ')+'</div>';
 
       // Coordinators
-      var coords = coordRow(p.coordinator1, p.email1, p.phone1) +
-                   coordRow(p.coordinator2, p.email2, p.phone2);
+      var coords = coordRow(p.coordinator1, p.email1, p.type1) +
+                   coordRow(p.coordinator2, p.email2, p.type2);
       if (coords) html += '<div class=\"cbr-divider\"></div><div class=\"cbr-coord-wrap\">'+coords+'</div>';
 
       // Action pills (only real URLs)
       var pills = '';
-      if (isUrl(p.gmap))  pills += '<a class=\"cbr-pill\" href=\"'+esc(p.gmap)+'\" target=\"_blank\" rel=\"noopener\">Directions</a>';
+      if (isUrl(p.gmap))  pills += '<a class=\"cbr-pill\" href=\"'+esc(p.gmap)+'\" target=\"_blank\" rel=\"noopener\">Map</a>';
       if (isUrl(p.web))   pills += '<a class=\"cbr-pill\" href=\"'+esc(p.web)+'\" target=\"_blank\" rel=\"noopener\">Website</a>';
       if (isUrl(p.ebird)) pills += '<a class=\"cbr-pill\" href=\"'+esc(p.ebird)+'\" target=\"_blank\" rel=\"noopener\">eBird</a>';
       if (isUrl(p.inat))  pills += '<a class=\"cbr-pill\" href=\"'+esc(p.inat)+'\" target=\"_blank\" rel=\"noopener\">iNaturalist</a>';
@@ -126,7 +148,7 @@ js_logic <- "
         L.geoJson(data, {
           pointToLayer: function (feature, latlng) {
             var isMobile = window.innerWidth < 600;
-            var iconSize = isMobile ? [35, 35] : [25, 25];
+            var iconSize = isMobile ? [50, 50] : [40, 40];
             return L.marker(latlng, { 
               icon: L.icon({ 
                 iconUrl: markerIcon, 
@@ -165,7 +187,7 @@ map_shell <- leaflet(options = leafletOptions(
   prependContent(tags$head(
     tags$meta(name="viewport", content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"),
     
-    # --- WHATSAPP / SOCIAL MEDIA PREVIEW TAGS ---
+    # --- SOCIAL MEDIA / LINK PREVIEW TAGS ---
     tags$meta(property="og:title", content="Campus Biodiversity Register"),
     tags$meta(property="og:description", content="Explore registered campuses and events for the Campus Biodiversity Register."),
     tags$meta(property="og:url", content="https://birdcountindia.github.io/cbr-map/"),
@@ -203,8 +225,6 @@ map_shell <- leaflet(options = leafletOptions(
       .cbr-coord-links { display: flex; gap: 6px; flex-shrink: 0; }
       .cbr-chip { display: inline-flex; align-items: center; justify-content: center; height: 28px; min-width: 28px; padding: 0 9px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: #f1f3f5; color: #495057; transition: transform .12s ease, background .12s ease; }
       .cbr-chip:hover { transform: translateY(-1px); }
-      .cbr-wa { background: #25D366; color: #fff; }
-      .cbr-wa:hover { background: #1da851; }
       .cbr-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
       .cbr-pill { flex: 1 1 auto; text-align: center; padding: 9px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none; background: #fff; color: #e74c3c; border: 1.5px solid #e74c3c; transition: all .12s ease; white-space: nowrap; }
       .cbr-pill:hover { background: #e74c3c; color: #fff; }
