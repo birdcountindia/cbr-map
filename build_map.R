@@ -133,7 +133,7 @@ js_logic <- "
       var div = L.DomUtil.create('div', 'stats-dashboard');
       div.innerHTML = 
         '<div class=\"stat-item\"><div class=\"stat-value\" id=\"dash-campuses\">--</div><div class=\"stat-label\">Campuses</div></div>' +
-        '<div class=\"stat-item\"><div class=\"stat-value\" id=\"dash-states\">-- out of 37</div><div class=\"stat-label\">States + UTs</div></div>';
+        '<div class=\"stat-item\"><div class=\"stat-value\" id=\"dash-states\">--</div><div class=\"stat-label\">States + UTs</div></div>';
       return div;
     };
     dashboard.addTo(map);
@@ -141,7 +141,7 @@ js_logic <- "
     // 2. FETCH DATA
     var baseUrl = 'https://raw.githubusercontent.com/birdcountindia/cbr-map/main/';
     fetch(baseUrl + 'no_of_campuses.txt').then(r => r.text()).then(t => { document.getElementById('dash-campuses').innerText = t.trim(); });
-    fetch(baseUrl + 'no_of_states.txt').then(r => r.text()).then(t => { document.getElementById('dash-states').innerText = t.trim() + ' / 37'; });
+    fetch(baseUrl + 'no_of_states.txt').then(r => r.text()).then(t => { document.getElementById('dash-states').innerText = t.trim() + ' out of 37'; });
 
     // 3. CAMPUS MARKERS
     fetch(baseUrl + 'campuses.json').then(r => r.json()).then(data => {
