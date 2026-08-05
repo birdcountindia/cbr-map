@@ -133,7 +133,7 @@ js_logic <- "
       var div = L.DomUtil.create('div', 'stats-dashboard');
       div.innerHTML = 
         '<div class=\"stat-item\"><div class=\"stat-value\" id=\"dash-campuses\">--</div><div class=\"stat-label\">Campuses</div></div>' +
-        '<div class=\"stat-item\"><div class=\"stat-value\" id=\"dash-states\">-- / 37</div><div class=\"stat-label\">States / UTs</div></div>';
+        '<div class=\"stat-item\"><div class=\"stat-value\" id=\"dash-states\">-- out of 37</div><div class=\"stat-label\">States + UTs</div></div>';
       return div;
     };
     dashboard.addTo(map);
@@ -205,7 +205,7 @@ map_shell <- leaflet(options = leafletOptions(
       .cbr-hover-popup .leaflet-popup-close-button:hover { color: #e74c3c; }
 
       .cbr-hover-card {
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;37
         min-width: 220px; max-width: 300px;
         background: #ffffff;
         border-radius: 18px;
