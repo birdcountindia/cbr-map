@@ -141,7 +141,7 @@ js_logic <- "
     // 2. FETCH DATA
     var baseUrl = 'https://raw.githubusercontent.com/birdcountindia/cbr-map/main/';
     fetch(baseUrl + 'no_of_campuses.txt').then(r => r.text()).then(t => { document.getElementById('dash-campuses').innerText = t.trim(); });
-    fetch(baseUrl + 'no_of_states.txt').then(r => r.text()).then(t => { document.getElementById('dash-states').innerText = t.trim() + ' out of 37'; });
+    fetch(baseUrl + 'no_of_states.txt').then(r => r.text()).then(t => { document.getElementById('dash-states').innerText = t.trim() + ' out of 36'; });
 
     // 3. CAMPUS MARKERS
     fetch(baseUrl + 'campuses.json').then(r => r.json()).then(data => {
