@@ -37,7 +37,8 @@ update_map_data <- function() {
       sep = ",\\s*",
       convert = TRUE
     ) |>
-    st_as_sf(coords = c("longitude", "latitude"), crs = 4326) 
+    st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |> 
+    mutate(coordinator2 = map_chr(coordinator2, ~ as.character(c(.x, NA)[[1]])))
   
   # Distinct states / UTs among mapped campuses
   no_of_states <- n_distinct(data$state)
