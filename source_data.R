@@ -14,7 +14,7 @@ update_map_data <- function() {
   
   data <- read_sheet(
     "https://docs.google.com/spreadsheets/d/1CKx9mL-AQxMGSr_nrLVmHdBVPNsVWCcbvWqVP_e51II/",
-    sheet = 3, range = "A:AJ", col_names = TRUE
+    sheet ="For website", range = "A:AJ", col_names = TRUE
   )
   
   # Total registrations (raw row count, before filtering)
