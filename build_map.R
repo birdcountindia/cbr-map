@@ -18,10 +18,12 @@ encode_svg <- function(path) {
   paste0("data:image/svg+xml;base64,", base64encode(path))
 }
 marker_uri <- encode_svg("www/icons/Map_marker.svg")
+marker_blue_uri <- encode_svg("www/icons/blue-marker.svg")
 
 # 3. Bundle Data
 map_data_bundle <- list(
-  marker = marker_uri
+  marker = marker_uri,
+  markerBlue = marker_blue_uri
 )
 
 # --- STEP 2: JAVASCRIPT LOGIC ---
@@ -29,6 +31,7 @@ js_logic <- "
   function(el, x, bundledData) {
     var map = this;
     var markerIcon = bundledData.marker;
+    var markerBlueIcon = bundledData.markerBlue;
 
     // --- HELPERS: popup content ---
     function esc(s){
@@ -144,35 +147,82 @@ js_logic <- "
     fetch(baseUrl + 'no_of_states.txt').then(r => r.text()).then(t => { document.getElementById('dash-states').innerText = t.trim() + ' out of 36'; });
 
     // 3. CAMPUS MARKERS
-    fetch(baseUrl + 'campuses.json').then(r => r.json()).then(data => {
-        L.geoJson(data, {
-          pointToLayer: function (feature, latlng) {
-            var isMobile = window.innerWidth < 600;
-            var iconSize = isMobile ? [50, 50] : [40, 40];
-            return L.marker(latlng, { 
-              icon: L.icon({ 
-                iconUrl: markerIcon, 
-                iconSize: iconSize, 
-                iconAnchor: [iconSize[0]/2, iconSize[1]] 
-              }),
-              group: 'Campuses' 
-            });
-          },
-          onEachFeature: function (f, l) {
-            l.bindPopup(buildPopup(f.properties), {
-              className: 'cbr-hover-popup',
-              closeButton: true,
-              autoClose: true,
-              closeOnClick: true,
-              maxWidth: 320,
-              minWidth: 240,
-              autoPan: true
-            });
-            // Flashy hover on desktop; tap still opens on mobile (no mouseover there).
-            // We deliberately do NOT close on mouseout so the links stay clickable.
-            l.on('mouseover', function () { this.openPopup(); });
-          }
-        }).addTo(map);
+    // Red  = registered (campuses.json, all campuses)
+    // Blue = participating (participating.json, subset of registered)
+    // 'all' view: red for registered-only + blue for participating
+    function makeLayer(data, iconUrl, filterFn) {
+      return L.geoJson(data, {
+        filter: filterFn,
+        pointToLayer: function (feature, latlng) {
+          var isMobile = window.innerWidth < 600;
+          var iconSize = isMobile ? [50, 50] : [40, 40];
+          return L.marker(latlng, {
+            icon: L.icon({
+              iconUrl: iconUrl,
+              iconSize: iconSize,
+              iconAnchor: [iconSize[0]/2, iconSize[1]]
+            })
+          });
+        },
+        onEachFeature: function (f, l) {
+          l.bindPopup(buildPopup(f.properties), {
+            className: 'cbr-hover-popup',
+            closeButton: true,
+            autoClose: true,
+            closeOnClick: true,
+            maxWidth: 320,
+            minWidth: 240,
+            autoPan: true
+          });
+          // Flashy hover on desktop; tap still opens on mobile (no mouseover there).
+          // We deliberately do NOT close on mouseout so the links stay clickable.
+          l.on('mouseover', function () { this.openPopup(); });
+        }
+      });
+    }
+
+    var layers = {};
+    var currentView = 'all';
+
+    function showView(view) {
+      currentView = view;
+      if (!layers.blue) return;
+      [layers.redAll, layers.redOnly, layers.blue].forEach(function (lyr) { map.removeLayer(lyr); });
+      if (view === 'all')           { layers.redOnly.addTo(map); layers.blue.addTo(map); }
+      if (view === 'registered')    { layers.redAll.addTo(map); }
+      if (view === 'participating') { layers.blue.addTo(map); }
+      var btns = document.querySelectorAll('.cbr-toggle button');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === view);
+      }
+    }
+
+    var toggle = L.control({position: 'topleft'});
+    toggle.onAdd = function (map) {
+      var div = L.DomUtil.create('div', 'cbr-toggle');
+      div.innerHTML =
+        '<button data-view=\"all\" class=\"active\"><span class=\"dot red\"></span><span class=\"dot blue\"></span>All</button>' +
+        '<button data-view=\"registered\"><span class=\"dot red\"></span>Registered</button>' +
+        '<button data-view=\"participating\"><span class=\"dot blue\"></span>Participating</button>';
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.on(div, 'click', function (e) {
+        var btn = e.target.closest('button');
+        if (btn) showView(btn.getAttribute('data-view'));
+      });
+      return div;
+    };
+    toggle.addTo(map);
+
+    Promise.all([
+      fetch(baseUrl + 'campuses.json').then(r => r.json()),
+      // Fall back to no blue markers if participating.json is missing
+      fetch(baseUrl + 'participating.json').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] }))
+    ]).then(function (res) {
+      var campuses = res[0], participating = res[1];
+      layers.redAll  = makeLayer(campuses, markerIcon);
+      layers.redOnly = makeLayer(campuses, markerIcon, function (f) { return !f.properties.participating; });
+      layers.blue    = makeLayer(participating, markerBlueIcon);
+      showView(currentView);
     });
   }
 "
@@ -205,7 +255,7 @@ map_shell <- leaflet(options = leafletOptions(
       .cbr-hover-popup .leaflet-popup-close-button:hover { color: #e74c3c; }
 
       .cbr-hover-card {
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;37
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         min-width: 220px; max-width: 300px;
         background: #ffffff;
         border-radius: 18px;
@@ -230,6 +280,23 @@ map_shell <- leaflet(options = leafletOptions(
       .cbr-pill:hover { background: #e74c3c; color: #fff; }
       /* --------------------------------------------------- */
 
+      /* ---------- VIEW TOGGLE (top centre) ---------- */
+      .leaflet-top.leaflet-left .cbr-toggle {
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%); margin: 0 !important;
+        display: flex; background: rgba(255,255,255,0.95); border-radius: 22px; padding: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-family: 'Helvetica Neue', Arial, sans-serif;
+      }
+      .cbr-toggle button {
+        display: inline-flex; align-items: center; gap: 4px; border: none; background: transparent; cursor: pointer;
+        padding: 7px 14px; border-radius: 18px; font-size: 13px; font-weight: 700; color: #495057; white-space: nowrap;
+      }
+      .cbr-toggle button.active { background: #1f2d3d; color: #fff; }
+      .cbr-toggle .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+      .cbr-toggle .dot.red { background: #e74c3c; }
+      .cbr-toggle .dot.blue { background: #2f80ed; }
+      .cbr-toggle .dot + .dot { margin-left: -2px; }
+      .cbr-toggle .dot:last-of-type { margin-right: 2px; }
+
       #bci-logo { position: absolute; bottom: 12px; right: 12px; z-index: 1000; }
       #bci-logo img { height: 65px; width: auto; opacity: 1.0; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
       .stats-dashboard { background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-family: 'Helvetica Neue', Arial, sans-serif; min-width: 110px; margin-top: 10px !important; }
@@ -237,7 +304,7 @@ map_shell <- leaflet(options = leafletOptions(
       .stat-item:last-child { border-bottom: none; margin-bottom: 0; }
       .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-top: -2px; }
       .stat-value { font-size: 26px; font-weight: 800; color: #e74c3c; line-height: 1.0; }
-      @media (max-width: 600px) { #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbr-hover-card { min-width: 200px; max-width: 280px; } }
+      @media (max-width: 600px) { .cbr-toggle button { padding: 6px 9px; font-size: 11px; } .leaflet-top.leaflet-left .cbr-toggle { position: relative; top: 0; left: 0; transform: none; margin: 10px 0 0 10px !important; } #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbr-hover-card { min-width: 200px; max-width: 280px; } }
     "))
   )) %>%
   appendContent(tags$div(id = "bci-logo", tags$img(src = "icons/logos.png"))) %>%

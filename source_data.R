@@ -23,12 +23,12 @@ update_map_data <- function() {
   
   # --- Process fresh data ---
   data <- data |>
-    select(c(2, 4, 5, 6, 8, 9, 11, 12, 15, 17, 18, 21, 32, 33)) |>
+    select(c(2, 4, 5, 6, 8, 9, 11, 12, 15, 17, 18, 21, 32, 33, 34)) |>
     setNames(c(
       "coords", "campus", "gmap", "web", "state", "area",
       "coordinator1", "type1", "email1",
       "coordinator2", "type2", "email2",
-      "inat", "ebird"
+      "inat", "ebird", "inat100"
     )) |>
     filter(!is.na(coords)) |>
     separate(
@@ -38,7 +38,12 @@ update_map_data <- function() {
       convert = TRUE
     ) |>
     st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |> 
-    mutate(coordinator2 = map_chr(coordinator2, ~ as.character(c(.x, NA)[[1]])))
+    mutate(
+      coordinator2 = map_chr(coordinator2, ~ as.character(c(.x, NA)[[1]])),
+      # Participating = 'iNat observations more than 100' is Yes
+      participating = str_trim(as.character(inat100)) %in% "Yes"
+    ) |>
+    select(-inat100)
   
   # Distinct states / UTs among mapped campuses
   no_of_states <- n_distinct(data$state)
@@ -76,6 +81,18 @@ update_map_data <- function() {
   
   writeLines(geojson, "campuses.json")
   message(glue("--- campuses.json written: {nrow(data_clean)} campuses. ---"))
+  
+  # --- Participating campuses (subset of registered) ---
+  participating <- data_clean |> filter(participating)
+  
+  geojson_part <- if (nrow(participating) > 0) {
+    sf_geojson(participating)
+  } else {
+    '{"type":"FeatureCollection","features":[]}'
+  }
+  
+  writeLines(geojson_part, "participating.json")
+  message(glue("--- participating.json written: {nrow(participating)} campuses. ---"))
   
   return(changed)
 }
