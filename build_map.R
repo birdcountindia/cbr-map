@@ -304,7 +304,21 @@ map_shell <- leaflet(options = leafletOptions(
       .stat-item:last-child { border-bottom: none; margin-bottom: 0; }
       .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-top: -2px; }
       .stat-value { font-size: 26px; font-weight: 800; color: #e74c3c; line-height: 1.0; }
-      @media (max-width: 600px) { .cbr-toggle button { padding: 6px 9px; font-size: 11px; } .leaflet-top.leaflet-left .cbr-toggle { position: relative; top: 0; left: 0; transform: none; margin: 10px 0 0 10px !important; } #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; } .stats-dashboard { transform: scale(0.8); transform-origin: top left; } .cbr-hover-card { min-width: 200px; max-width: 280px; } }
+      @media (max-width: 600px) {
+        /* Stats box + filters side by side, filters stacked vertically */
+        .leaflet-top.leaflet-left { display: flex; flex-direction: row; align-items: flex-start; }
+        .leaflet-top.leaflet-left .leaflet-control { clear: none; }
+        .stats-dashboard { padding: 6px 10px; min-width: 88px; }
+        .stat-value { font-size: 20px; }
+        .stat-label { font-size: 9px; }
+        .leaflet-top.leaflet-left .cbr-toggle {
+          position: relative; top: 0; left: 0; transform: none; margin: 10px 0 0 8px !important;
+          flex-direction: column; align-items: stretch; border-radius: 12px; gap: 2px;
+        }
+        .cbr-toggle button { padding: 6px 10px; font-size: 11px; border-radius: 9px; }
+        #bci-logo img { height: 48px; } #bci-logo { bottom: 10px; right: 10px; }
+        .cbr-hover-card { min-width: 200px; max-width: 280px; }
+      }
     "))
   )) %>%
   appendContent(tags$div(id = "bci-logo", tags$img(src = "icons/logos.png"))) %>%
