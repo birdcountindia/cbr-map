@@ -174,9 +174,8 @@ js_logic <- "
             minWidth: 240,
             autoPan: true
           });
-          // Flashy hover on desktop; tap still opens on mobile (no mouseover there).
-          // We deliberately do NOT close on mouseout so the links stay clickable.
-          l.on('mouseover', function () { this.openPopup(); });
+          // bindPopup() above already gives click-to-open for free (Leaflet's
+          // default marker behavior) — nothing else needed here.
         }
       });
     }
